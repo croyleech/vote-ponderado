@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Ponderado - Votaciones con Peso</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #ec4899;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"],
+        textarea {
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        textarea {
+            flex: 1;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #fecaca;
+        }
+
+        .options-section {
+            margin-bottom: 40px;
+        }
+
+        .options-section h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .option-item:hover {
+            border-color: var(--primary);
+            background: #f0f3ff;
+        }
+
+        .option-info {
+            flex: 1;
+        }
+
+        .option-name {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .option-points {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--dark);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .results-section {
+            border-top: 2px solid var(--border);
+            padding-top: 40px;
+        }
+
+        .results-section h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-item {
+            margin-bottom: 28px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-name {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 15px;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+        }
+
+        .result-points {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .result-percentage {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .result-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .result-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .vote-button {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .vote-button:hover:not(:disabled) {
+            background: #d1367a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(236, 72, 153, 0.3);
+        }
+
+        .vote-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .share-section {
+            border-top: 2px solid var(--border);
+            padding-top: 30px;
+            margin-top: 40px;
+        }
+
+        .share-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark);
+            margin-bottom: 16px;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .share-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .share-btn:hover {
+            border-color: var(--primary);
+            background: var(--light);
+        }
+
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            animation: slideUp 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 8px;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            border-left: 4px solid #dc2626;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 24px 20px;
+            }
+
+            .result-stats {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗳️ Vote Ponderado</h1>
+            <p>Votaciones ponderadas con persistencia en base de datos</p>
+        </div>
+
+        <div class="content">
+            <div class="toggle-group">
+                <button class="toggle-btn active" data-mode="create" onclick="switchMode('create')">Crear votación</button>
+                <button class="toggle-btn" data-mode="vote" onclick="switchMode('vote')">Votar</button>
+            </div>
+
+            <!-- MODO CREAR -->
+            <div id="createMode" class="mode-section">
+                <div id="errorCreate" class="error-message" style="display: none;"></div>
+
+                <div class="form-group">
+                    <label>Nombre de la votación</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="pollTitle" placeholder="Ej: ¿A dónde vamos este fin de semana?">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción (opcional)</label>
+                    <div class="input-wrapper">
+                        <textarea id="pollDescription" placeholder="Escribe una descripción detallada..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Añade opciones</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="optionInput" placeholder="Nueva opción...">
+                        <button class="btn-primary" onclick="addOption()">Añadir</button>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <h2>Opciones ordenadas</h2>
+                    <div id="optionsList" class="options-list">
+                        <div class="empty-state">
+                            <p>Aún no hay opciones. ¡Añade una para empezar!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="vote-button" id="createBtn" onclick="createPoll()">Crear votación</button>
+
+                <div id="pollCreated" style="display: none; margin-top: 30px; padding: 20px; background: #ecfdf5; border-radius: 12px; border: 2px solid var(--success);">
+                    <p style="color: var(--success); font-weight: 600; margin-bottom: 16px;">✓ ¡Votación creada!</p>
+                    <p style="font-size: 13px; color: var(--dark); margin-bottom: 16px;">Comparte este enlace con tus amigos:</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="pollLink" readonly style="padding: 12px; border: 2px solid var(--success); border-radius: 8px; background: white; flex: 1;">
+                        <button class="btn-primary" onclick="copyLink()">Copiar</button>
+                    </div>
+                    <div class="share-section" style="border-top: none; padding-top: 0; margin-top: 16px;">
+                        <h3>Compartir</h3>
+                        <div class="share-buttons">
+                            <button class="share-btn" onclick="shareWhatsApp()">WhatsApp</button>
+                            <button class="share-btn" onclick="shareTelegram()">Telegram</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODO VOTAR -->
+            <div id="voteMode" class="mode-section" style="display: none;">
+                <div id="errorVote" class="error-message" style="display: none;"></div>
+
+                <div id="pollInfo" style="display: none;">
+                    <div style="margin-bottom: 20px; padding: 20px; background: var(--light); border-radius: 12px; border: 2px solid var(--border);">
+                        <h2 id="votePollTitle" style="font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 8px;"></h2>
+                        <p id="pollDescription" style="font-size: 13px; color: var(--dark); opacity: 0.7; margin-bottom: 12px;"></p>
+                        <p id="pollVotes" style="font-size: 12px; color: var(--primary); font-weight: 600;"></p>
+                    </div>
+
+                    <div id="voteRanking">
+                        <h2 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--dark); margin-bottom: 20px;">Ordena las opciones</h2>
+                        <div id="voteOptions" class="options-list"></div>
+                    </div>
+
+                    <button class="vote-button" id="submitBtn" onclick="submitVote()">Enviar voto</button>
+
+                    <div id="voteSuccess" style="display: none; margin-top: 30px; padding: 20px; background: #ecfdf5; border-radius: 12px; border: 2px solid var(--success); text-align: center;">
+                        <p style="color: var(--success); font-weight: 700; font-size: 16px; margin-bottom: 8px;">✓ ¡Voto registrado!</p>
+                        <p style="font-size: 13px; color: var(--dark); opacity: 0.8;">Tu voto ha sido guardado en la base de datos.</p>
+                    </div>
+
+                    <div class="results-section">
+                        <h2>Resultados en vivo</h2>
+                        <div id="resultsContainer"></div>
+                    </div>
+                </div>
+
+                <div id="noPoll" style="text-align: center; padding: 40px 20px;">
+                    <p style="font-size: 14px; color: var(--dark); opacity: 0.7; margin-bottom: 20px;">Aún no hay votación abierta. Pide a quien la creó que comparta el enlace.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL - Cambiar si está en servidor
+        const API_BASE = window.location.origin === 'http://localhost:3000' 
+            ? 'http://localhost:3000' 
+            : window.location.origin;
+
+        let currentOptions = [];
+        let currentVoteOrder = [];
+        let activePollId = null;
+        let currentMode = 'create';
+
+        // Obtener ID de votación de URL
+        function getActivePollId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('poll');
+        }
+
+        // Cambiar modo
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            document.querySelectorAll('.mode-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            if (mode === 'create') {
+                document.getElementById('createMode').style.display = 'block';
+            } else {
+                document.getElementById('voteMode').style.display = 'block';
+                loadActivePoll();
+            }
+        }
+
+        // Añadir opción
+        function addOption() {
+            const input = document.getElementById('optionInput');
+            const value = input.value.trim();
+
+            if (!value) {
+                alert('Por favor escribe una opción');
+                return;
+            }
+
+            currentOptions.push(value);
+            input.value = '';
+            input.focus();
+            renderOptions();
+        }
+
+        // Eliminar opción
+        function removeOption(index) {
+            currentOptions.splice(index, 1);
+            renderOptions();
+        }
+
+        // Renderizar opciones
+        function renderOptions() {
+            const list = document.getElementById('optionsList');
+
+            if (currentOptions.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Aún no hay opciones. ¡Añade una para empezar!</p></div>';
+                return;
+            }
+
+            list.innerHTML = currentOptions.map((opt, idx) => `
+                <div class="option-item">
+                    <div class="option-info">
+                        <div class="option-name">${escapeHtml(opt)}</div>
+                        <div class="option-points">${currentOptions.length - idx} puntos</div>
+                    </div>
+                    <button class="btn-danger" onclick="removeOption(${idx})">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        // Crear votación
+        async function createPoll() {
+            const title = document.getElementById('pollTitle').value.trim();
+            const description = document.getElementById('pollDescription').value.trim();
+            const errorDiv = document.getElementById('errorCreate');
+
+            errorDiv.style.display = 'none';
+
+            if (!title) {
+                showError('Por favor escribe un título para la votación', errorDiv);
+                return;
+            }
+
+            if (currentOptions.length < 2) {
+                showError('Necesitas al menos 2 opciones', errorDiv);
+                return;
+            }
+
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Creando...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/polls`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        options: currentOptions
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al crear votación');
+                }
+
+                const data = await response.json();
+                document.getElementById('pollLink').value = data.url;
+                document.getElementById('pollCreated').style.display = 'block';
+
+                // Limpiar
+                document.getElementById('pollTitle').value = '';
+                document.getElementById('pollDescription').value = '';
+                currentOptions = [];
+                renderOptions();
+            } catch (error) {
+                showError('Error: ' + error.message, errorDiv);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Crear votación';
+            }
+        }
+
+        // Cargar votación activa
+        async function loadActivePoll() {
+            activePollId = getActivePollId();
+            const errorDiv = document.getElementById('errorVote');
+
+            if (!activePollId) {
+                document.getElementById('pollInfo').style.display = 'none';
+                document.getElementById('noPoll').style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/polls/${activePollId}`);
+
+                if (!response.ok) {
+                    throw new Error('Votación no encontrada');
+                }
+
+                const poll = await response.json();
+
+                document.getElementById('pollInfo').style.display = 'block';
+                document.getElementById('noPoll').style.display = 'none';
+
+                document.getElementById('votePollTitle').textContent = poll.title;
+                document.getElementById('pollDescription').textContent = poll.description || 'Sin descripción';
+                document.getElementById('pollVotes').textContent = `${poll.totalVotes} voto${poll.totalVotes !== 1 ? 's' : ''} registrado${poll.totalVotes !== 1 ? 's' : ''}`;
+
+                currentVoteOrder = [...poll.options];
+                renderVoteOptions();
+                renderResults(poll.results, poll.totalVotes);
+            } catch (error) {
+                showError('Error: ' + error.message, errorDiv);
+                document.getElementById('pollInfo').style.display = 'none';
+                document.getElementById('noPoll').style.display = 'block';
+            }
+        }
+
+        // Renderizar opciones para votar
+        function renderVoteOptions() {
+            const container = document.getElementById('voteOptions');
+
+            container.innerHTML = currentVoteOrder.map((opt, idx) => `
+                <div class="option-item" draggable="true" data-index="${idx}" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)" style="cursor: grab;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                        <span style="font-size: 18px; font-weight: 700; color: var(--primary);">${idx + 1}</span>
+                        <div class="option-info">
+                            <div class="option-name">${escapeHtml(opt)}</div>
+                            <div class="option-points">Arrastra para reordenar</div>
+                        </div>
+                    </div>
+                    <span style="color: var(--primary); font-weight: 700; font-size: 13px;">↕ Arrastrar</span>
+                </div>
+            `).join('');
+        }
+
+        let draggedIndex = null;
+
+        function handleDragStart(e) {
+            draggedIndex = parseInt(e.target.closest('[data-index]').dataset.index);
+            e.target.closest('.option-item').style.opacity = '0.5';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetIndex = parseInt(e.target.closest('[data-index]').dataset.index);
+
+            if (draggedIndex !== null && draggedIndex !== targetIndex) {
+                const temp = currentVoteOrder[draggedIndex];
+                currentVoteOrder.splice(draggedIndex, 1);
+                currentVoteOrder.splice(targetIndex, 0, temp);
+                renderVoteOptions();
+            }
+        }
+
+        function handleDragEnd(e) {
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.style.opacity = '1';
+            });
+            draggedIndex = null;
+        }
+
+        // Enviar voto
+        async function submitVote() {
+            const btn = document.getElementById('submitBtn');
+            const errorDiv = document.getElementById('errorVote');
+            errorDiv.style.display = 'none';
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Enviando...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/polls/${activePollId}/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voteOrder: currentVoteOrder })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al registrar voto');
+                }
+
+                const data = await response.json();
+
+                document.getElementById('voteSuccess').style.display = 'block';
+                
+                setTimeout(() => {
+                    renderResults(data.results, data.totalVotes);
+                    document.getElementById('pollVotes').textContent = `${data.totalVotes} voto${data.totalVotes !== 1 ? 's' : ''} registrado${data.totalVotes !== 1 ? 's' : ''}`;
+                    document.getElementById('voteSuccess').style.display = 'none';
+                }, 2000);
+            } catch (error) {
+                showError('Error: ' + error.message, errorDiv);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Enviar voto';
+            }
+        }
+
+        // Renderizar resultados
+        function renderResults(results, totalVotes) {
+            const container = document.getElementById('resultsContainer');
+
+            if (!results || results.length === 0) {
+                container.innerHTML = '<p style="color: var(--dark); opacity: 0.7; font-size: 13px;">Sin votos aún</p>';
+                return;
+            }
+
+            container.innerHTML = results.map(result => `
+                <div class="result-item">
+                    <div class="result-header">
+                        <span class="result-name">${escapeHtml(result.name)}</span>
+                        <div class="result-stats">
+                            <span class="result-points">${result.points} pts</span>
+                            <span class="result-percentage">${result.percentage}%</span>
+                        </div>
+                    </div>
+                    <div class="result-bar-container">
+                        <div class="result-bar" style="width: ${result.percentage}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Copiar enlace
+        function copyLink() {
+            const link = document.getElementById('pollLink');
+            link.select();
+            document.execCommand('copy');
+
+            const feedback = document.createElement('div');
+            feedback.className = 'copy-feedback';
+            feedback.textContent = '✓ Enlace copiado';
+            document.body.appendChild(feedback);
+
+            setTimeout(() => feedback.remove(), 2000);
+        }
+
+        // Compartir WhatsApp
+        function shareWhatsApp() {
+            const link = document.getElementById('pollLink').value;
+            const title = document.getElementById('pollTitle').value;
+            const text = `🗳️ ${title}\n\nVota aquí: ${link}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+        }
+
+        // Compartir Telegram
+        function shareTelegram() {
+            const link = document.getElementById('pollLink').value;
+            const title = document.getElementById('pollTitle').value;
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(title)}`);
+        }
+
+        // Funciones auxiliares
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function showError(message, errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Inicializar
+        document.getElementById('optionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addOption();
+        });
+
+        // Si hay votación activa, ir al modo votar
+        if (getActivePollId()) {
+            switchMode('vote');
+        } else {
+            document.getElementById('createMode').style.display = 'block';
+        }
+
+        // Actualizar resultados cada 3 segundos
+        setInterval(() => {
+            if (currentMode === 'vote' && activePollId) {
+                loadActivePoll();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
